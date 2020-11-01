@@ -176,7 +176,6 @@ bool send_data()
     data.x = map(analogRead(x), 0, 1023, 0, 180); // read and map joystick x value
     data.y = map(analogRead(y), 0, 1023, 0, 255); // read and map joystick y value
     data.b = state;
-    // end t-flip-flop in code
 
     return radio.write(&data, sizeof(Data), 0); // write data to radio
 }
