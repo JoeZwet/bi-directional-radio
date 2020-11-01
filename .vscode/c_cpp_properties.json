@@ -3,6 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "C:\\Users\\me\\Documents\\Arduino\\libraries\\TimerOne",
                 "C:\\Users\\me\\Documents\\Arduino\\libraries\\**",
                 "C:\\Program Files (x86)\\Arduino\\libraries\\SD\\src",
                 "C:\\Users\\me\\Documents\\Arduino\\libraries\\Servo\\src",

@@ -4,6 +4,7 @@
 #include <RF24.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <TimerOne.h>
 
 #pragma region LibrarySetup
 
@@ -37,9 +38,8 @@ struct Data
     bool b; // joystick button
 };
 
-int r; // reset/potentiometer pos
-
-Data data; // cache instance
+volatile int r; // cache reset/potentiometer pos
+volatile Data data; // cache data
 
 #pragma endregion
 
@@ -75,6 +75,10 @@ void setup_display_side()
     lcd.backlight();
     lcd.clear();
     write_lcd_labels();
+
+    // setup lcd timer interrupt
+    Timer1.initialize(100); // interrupt every 100ms
+    Timer1.attachInterrupt(write_lcd_values); // run write_lcd_values() every interrupt
 
     // setup joystick
     pinMode(x, INPUT);
@@ -128,21 +132,6 @@ void loop_display_side()
             radio.read(&r, sizeof(r)); // read ack payload
         }
     }
-    // display data
-    lcd.setCursor(4, 0);
-    lcd.print("    "); // clear servo value area
-    lcd.setCursor(4, 0);
-    lcd.print(String(data.x)); // write sero pos value
-    lcd.setCursor(12, 0);
-    lcd.print("    "); // clear motor value area
-    lcd.setCursor(12, 0);
-    lcd.print(String(data.y)); // write motor speed value
-    lcd.setCursor(4, 1);
-    lcd.print(data.b ? "ON " : "OFF"); // write button value
-    lcd.setCursor(12, 1);
-    lcd.print("    "); // clear reset value area
-    lcd.setCursor(12, 1);
-    lcd.print(String(r)); // write reset value
 }
 
 void loop_motor_side()
@@ -201,6 +190,24 @@ void write_lcd_labels()
     lcd.print("btn:"); // write button label
     lcd.setCursor(8, 1);
     lcd.print("rst:"); // write reset label
+}
+
+void write_lcd_values()
+{
+    lcd.setCursor(4, 0);
+    lcd.print("    "); // clear servo value area
+    lcd.setCursor(4, 0);
+    lcd.print(String(data.x)); // write sero pos value
+    lcd.setCursor(12, 0);
+    lcd.print("    "); // clear motor value area
+    lcd.setCursor(12, 0);
+    lcd.print(String(data.y)); // write motor speed value
+    lcd.setCursor(4, 1);
+    lcd.print(data.b ? "ON " : "OFF"); // write button value
+    lcd.setCursor(12, 1);
+    lcd.print("    "); // clear reset value area
+    lcd.setCursor(12, 1);
+    lcd.print(String(r)); // write reset value
 }
 
 #pragma endregion
