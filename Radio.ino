@@ -30,7 +30,8 @@ int s = A3; // servo
 
 const byte addr[][6] = {"00003", "00004"}; // radio addresses
 const bool isDisplaySide = true;          // side with lcd display, confirm before uploading
-volatile bool state = false;                        // button state
+volatile bool state = false;  
+long time = 0;                      // button state
 struct Data
 {
     int x;  // joystick x
@@ -133,7 +134,7 @@ void loop_display_side()
             radio.read(&r, sizeof(r)); // read ack payload
         }
     }
-    write_lcd_values();
+    write_lcd_values(); // write data values to lcd
 }
 
 void loop_motor_side()
@@ -171,12 +172,11 @@ bool send_data()
 
     return radio.write(&data, sizeof(Data), 0); // write data to radio
 }
-byte prevReading = LOW; // used for debouncing button interrupt
-long time = 0;
+
 void handle_button_interrupt()
 {
     byte reading = digitalRead(b);
-    if(reading == HIGH && prevReading == LOW && millis() - time > 200)
+    if(reading == HIGH && millis() - time > 200) // debounce button interrupt
     {
         state = !state; // flip state
         time = millis();
@@ -185,9 +185,9 @@ void handle_button_interrupt()
 
 void handle_timer_interrupt()
 {
-    noInterrupts();
-    shouldUpdateLCD = true;
-    interrupts();
+    noInterrupts(); // disable interrupts, prevents data lose between interrupt and main program
+    shouldUpdateLCD = true; // mark the lcd for update
+    interrupts(); // re-enable interrupts once data modification is complete
 }
 
 void send_ack()
@@ -226,9 +226,9 @@ void write_lcd_values()
     lcd.setCursor(12, 1);
     lcd.print(String(r)); // write reset value
 
-    noInterrupts();
+    noInterrupts(); // disable interrupts, prevents data lose between interrupt and main program
     shouldUpdateLCD = false; // reset update flag once done
-    interrupts();
+    interrupts(); // re-enable interrupts once data modification is complete
 }
 
 #pragma endregion
