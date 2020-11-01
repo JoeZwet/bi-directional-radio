@@ -1,0 +1,6 @@
+{
+    "sketch": "Radio.ino",
+    "board": "arduino:avr:uno",
+    "programmer": "AVRISP mkII",
+    "port": "COM7"
+}
