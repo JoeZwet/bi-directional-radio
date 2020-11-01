@@ -29,7 +29,7 @@ int s = A3; // servo
 #pragma region Data
 
 const byte addr[][6] = {"00003", "00004"}; // radio addresses
-const bool isDisplaySide = false;          // side with lcd display, confirm before uploading
+const bool isDisplaySide = true;          // side with lcd display, confirm before uploading
 volatile bool state = false;                        // button state
 struct Data
 {
@@ -38,8 +38,9 @@ struct Data
     bool b; // joystick button
 };
 
-volatile int r; // cache reset/potentiometer pos
-volatile Data data; // cache data
+int r; // cache reset/potentiometer pos
+Data data; // cache data
+volatile bool shouldUpdateLCD = false; // weather or not the timer interrupt has marked the lcd for update
 
 #pragma endregion
 
@@ -78,7 +79,7 @@ void setup_display_side()
 
     // setup lcd timer interrupt
     Timer1.initialize(100); // interrupt every 100ms
-    Timer1.attachInterrupt(write_lcd_values); // run write_lcd_values() every interrupt
+    Timer1.attachInterrupt(handle_timer_interrupt); // run handle_timer_interrupt() every interrupt
 
     // setup joystick
     pinMode(x, INPUT);
@@ -132,6 +133,7 @@ void loop_display_side()
             radio.read(&r, sizeof(r)); // read ack payload
         }
     }
+    write_lcd_values();
 }
 
 void loop_motor_side()
@@ -169,9 +171,16 @@ bool send_data()
     return radio.write(&data, sizeof(Data), 0); // write data to radio
 }
 
-bool handle_button_interrupt()
+void handle_button_interrupt()
 {
     state = !state; // flip state
+}
+
+void handle_timer_interrupt()
+{
+    noInterrupts();
+    shouldUpdateLCD = true;
+    interrupts();
 }
 
 void send_ack()
@@ -194,6 +203,7 @@ void write_lcd_labels()
 
 void write_lcd_values()
 {
+    if(!shouldUpdateLCD) return; // dont update if not marked for update
     lcd.setCursor(4, 0);
     lcd.print("    "); // clear servo value area
     lcd.setCursor(4, 0);
@@ -208,6 +218,10 @@ void write_lcd_values()
     lcd.print("    "); // clear reset value area
     lcd.setCursor(12, 1);
     lcd.print(String(r)); // write reset value
+
+    noInterrupts();
+    shouldUpdateLCD = false; // reset update flag once done
+    interrupts();
 }
 
 #pragma endregion
