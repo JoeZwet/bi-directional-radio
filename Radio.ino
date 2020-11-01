@@ -58,16 +58,16 @@ void setup()
 
     if (isDisplaySide)
     {
-        setup_display_side();
+        setupDisplaySide();
     }
     else
     {
-        setup_motor_side();
+        setupMotorSide();
     }
 }
 
 // setup side with display
-void setup_display_side()
+void setupDisplaySide()
 {
     // setup radio
     radio.openWritingPipe(addr[0]);
@@ -76,21 +76,21 @@ void setup_display_side()
     lcd.init();
     lcd.backlight();
     lcd.clear();
-    write_lcd_labels();
+    writeLCDLables();
 
     // setup lcd timer interrupt
     Timer1.initialize(100); // interrupt every 100ms
-    Timer1.attachInterrupt(handle_timer_interrupt); // run handle_timer_interrupt() every interrupt
+    Timer1.attachInterrupt(handleTimerInterrupt); // run handle_timer_interrupt() every interrupt
 
     // setup joystick
     pinMode(x, INPUT);
     pinMode(y, INPUT);
     pinMode(b, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(b), handle_button_interrupt, RISING); // attach an interrupt to the rising edge of the joystick button
+    attachInterrupt(digitalPinToInterrupt(b), handleButtonInterrupt, RISING); // attach an interrupt to the rising edge of the joystick button
 }
 
 // setup side with motor
-void setup_motor_side()
+void setupMotorSide()
 {
     // setup radio
     radio.openReadingPipe(1, addr[0]);
@@ -117,32 +117,32 @@ void loop()
 {
     if (isDisplaySide)
     {
-        loop_display_side();
+        loopDisplaySide();
     }
     else
     {
-        loop_motor_side();
+        loopMotorSide();
     }
 }
 
-void loop_display_side()
+void loopDisplaySide()
 {
-    if (send_data()) // send data on radio
+    if (sendData()) // send data on radio
     {
         if (radio.isAckPayloadAvailable()) // check if ack payload is avaliable
         {
             radio.read(&r, sizeof(r)); // read ack payload
         }
     }
-    write_lcd_values(); // write data values to lcd
+    writeLCDValues(); // write data values to lcd
 }
 
-void loop_motor_side()
+void loopMotorSide()
 {
     if (radio.available()) // check if data is avaliable to be read
     {
         radio.read(&data, sizeof(Data)); // read data from radio
-        send_ack(); // set ack payload
+        sendAck(); // set ack payload
     }
 
     if (data.b)
@@ -164,7 +164,7 @@ void loop_motor_side()
 
 #pragma region Utilities
 
-bool send_data()
+bool sendData()
 {
     data.x = map(analogRead(x), 0, 1023, 0, 180); // read and map joystick x value
     data.y = map(analogRead(y), 0, 1023, 0, 255); // read and map joystick y value
@@ -173,7 +173,7 @@ bool send_data()
     return radio.write(&data, sizeof(Data), 0); // write data to radio
 }
 
-void handle_button_interrupt()
+void handleButtonInterrupt()
 {
     byte reading = digitalRead(b);
     if(reading == HIGH && millis() - time > 200) // debounce button interrupt
@@ -183,20 +183,20 @@ void handle_button_interrupt()
     }
 }
 
-void handle_timer_interrupt()
+void handleTimerInterrupt()
 {
     noInterrupts(); // disable interrupts, prevents data lose between interrupt and main program
     shouldUpdateLCD = true; // mark the lcd for update
     interrupts(); // re-enable interrupts once data modification is complete
 }
 
-void send_ack()
+void sendAck()
 {
     r = map(analogRead(p), 0, 1023, 0, 180); // read and map potentiometer value
     radio.writeAckPayload(1, &r, sizeof(r)); // write the reset value to the ack payload
 }
 
-void write_lcd_labels()
+void writeLCDLables()
 {
     lcd.setCursor(0, 0);
     lcd.print("svr:"); // write servo pos label
@@ -208,7 +208,7 @@ void write_lcd_labels()
     lcd.print("rst:"); // write reset label
 }
 
-void write_lcd_values()
+void writeLCDValues()
 {
     if(!shouldUpdateLCD) return; // dont update if not marked for update
     lcd.setCursor(4, 0);
