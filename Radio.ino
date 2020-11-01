@@ -7,6 +7,7 @@
 #include <TimerOne.h>
 
 #pragma region LibrarySetup
+//Team: Joe, Arran and Finnian.
 
 RF24 radio(9, 10);                  // (CSN, CE)
 LiquidCrystal_I2C lcd(0x3f, 16, 2); //0x27 or 0x3F, width, height
