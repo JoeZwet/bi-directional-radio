@@ -29,8 +29,7 @@ int s = A3; // servo
 
 const byte addr[][6] = {"00003", "00004"}; // radio addresses
 const bool isDisplaySide = false;          // side with lcd display, confirm before uploading
-bool prevState = false;                    // previous button state
-bool state = false;                        // button state
+volatile bool state = false;                        // button state
 struct Data
 {
     int x;  // joystick x
@@ -81,6 +80,7 @@ void setup_display_side()
     pinMode(x, INPUT);
     pinMode(y, INPUT);
     pinMode(b, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(b), handle_button_interrupt, FALLING); // attach an interrupt to the falling edge of the joystick button
 }
 
 // setup side with motor
@@ -175,21 +175,15 @@ bool send_data()
 {
     data.x = map(analogRead(x), 0, 1023, 0, 180); // read and map joystick x value
     data.y = map(analogRead(y), 0, 1023, 0, 255); // read and map joystick y value
-    data.b = digitalRead(b);                      // radio joystick button value
-
-    // t-flip-flop in code
-    if (data.b != prevState)
-    {
-        prevState = data.b;
-        if (prevState)
-        {
-            state = !state;
-        }
-    }
     data.b = state;
     // end t-flip-flop in code
 
     return radio.write(&data, sizeof(Data), 0); // write data to radio
+}
+
+bool handle_button_interrupt()
+{
+    state = !state; // flip state
 }
 
 void send_ack()
