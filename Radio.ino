@@ -85,7 +85,7 @@ void setup_display_side()
     pinMode(x, INPUT);
     pinMode(y, INPUT);
     pinMode(b, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(b), handle_button_interrupt, FALLING); // attach an interrupt to the falling edge of the joystick button
+    attachInterrupt(digitalPinToInterrupt(b), handle_button_interrupt, RISING); // attach an interrupt to the rising edge of the joystick button
 }
 
 // setup side with motor
@@ -156,6 +156,7 @@ void loop_motor_side()
         digitalWrite(l, LOW);   // turn off led
         srv.write(data.x);      // write x value to servo
     }
+    delay(15);
 }
 
 #pragma endregion
@@ -170,10 +171,16 @@ bool send_data()
 
     return radio.write(&data, sizeof(Data), 0); // write data to radio
 }
-
+byte prevReading = LOW; // used for debouncing button interrupt
+long time = 0;
 void handle_button_interrupt()
 {
-    state = !state; // flip state
+    byte reading = digitalRead(b);
+    if(reading == HIGH && prevReading == LOW && millis() - time > 200)
+    {
+        state = !state; // flip state
+        time = millis();
+    }
 }
 
 void handle_timer_interrupt()
